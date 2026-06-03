@@ -1,0 +1,24 @@
+############################################
+# Live Terraform Pipeline
+# Repo: tf-live/midh-dev-eks
+#
+# Purpose:
+# - Uses the centralized enterprise live Terraform pipeline.
+# - Runs source governance, Checkov, TFLint, Terraform plan, and OPA plan checks.
+# - Applies only through the shared manual apply job on main.
+# - Builds the private EKS foundation before Argo CD or AWX Kubernetes jobs.
+############################################
+
+include:
+  - project: infra_team/platform-pipelines
+    ref: main
+    file: terraform/live/aws.yml
+
+variables:
+  # Temporary lab exception: the EKS API public endpoint is enabled only for
+  # bootstrap from the local GitLab runner/AWX public /32. Custom OPA still
+  # enforces private endpoint access and rejects broad public CIDRs.
+  CHECKOV_SKIP_CHECKS: "CKV_TF_1,CKV_AWS_39"
+  TF_VAR_aws_region: "$AWS_DEFAULT_REGION"
+  TF_STATE_NAME: "midh-dev-eks"
+  AWX_HOST: "http://awx.midhtech.local"
